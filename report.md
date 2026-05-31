@@ -37,68 +37,83 @@ Instead of relying on generic health advice, the app is powered by **real-world 
 * **Future Self Messaging:** Programmed a dynamic prediction generator that writes a personalized, friendly "letter" from the user's Future Self based on the calculated scores.
 * **Refactored Helpers (May 31):** Extracted reusable logic into `calculateSingleDecisionWithMessage`, `calculateCombinedDayResult`, `compareOverallScores`, `getSentimentFromScore`, and `getOptionLabel` so Analyze and Compare flows share the same scoring path.
 
-### C. UI/UX Design & Typography (Medium-Fidelity Skeleton)
-* **Mobile-First Layout:** Designed a sleek, single-column container optimized for mobile screens.
-* **Tagline & Hero Section:** Created a spacious, welcoming Hero Section featuring your custom tagline:
-  > **"Check and Decide Your Own Future. It's That Simple."**
-* **Visual Background:** Designed an elegant, lightweight abstract geometric background using CSS gradients and soft blurs (mint-to-teal glow) to avoid heavy image assets.
-* **Premium Typography:**
-  * **Outfit** (Headings): A friendly, geometric typeface with rounded curves that gives a modern, wellness-oriented feel.
-  * **Plus Jakarta Sans** (Body Text): A highly readable, clean, and modern screen font.
-* **Phosphor Icons Integration:** Integrated the premium **Phosphor Icons** library using the consistent and friendly **Duotone** style across categories, metrics, and actions.
-* **Detailed Statistics Accordion:** Built a collapsible section showing custom horizontal bar charts that break down the exact percentage distribution of the 70 survey responses for Energy, Mood, and Focus. Accordion label toggles between "Show" and "Hide Detailed Statistics."
+### C. UI/UX Design & Typography (Scientific Compare-First Redesign)
+* **Mobile-First Layout:** Kept the single-column mobile layout, but upgraded the visual hierarchy so the product now feels more like a decision tool than a generic wellness calculator.
+* **Compare-First Hero:** Replaced the older soft hero treatment with a darker, more analytical hero that frames the product around comparing "two possible tomorrows" before making a choice.
+* **Sharper Shape System:** Reduced roundness across cards, buttons, selectors, badges, and panels. The UI now uses a sharper, more restrained panel language instead of bubbly capsules and heavily rounded cards.
+* **Premium Typography:** Continued using **Outfit** for headings and **Plus Jakarta Sans** for body text, but the current layout uses them in a more structured, evidence-led presentation style.
+* **Scientific Visual Language:** Added a darker grid-based hero, compact metric tiles, stronger borders, and more consistent spacing to support a smarter, more data-driven feel.
+* **Phosphor Icons Integration:** Continued using **Phosphor Icons** in a consistent duotone style for categories, metrics, and actions.
+* **Detailed Statistics Accordion:** Retained the collapsible statistics section, with percentage distributions for Energy, Mood, and Focus in both Analyze and Compare states.
 
-### D. A/B Compare Mode (May 31)
-* **Dual Intent Toggle:** Added an **Analyze** | **Compare A/B** sub-toggle under both **Single Decision** and **Combined Day** modes.
-* **Single Analyze:** Category capsule pills (Sleep / Food / Caffeine) plus a dropdown for the chosen option.
-* **Single Compare:** Same category pills, then **Option A** and **Option B** dropdowns within the same category (not cross-category). No default selection; compare button stays disabled until both are chosen. The other side's pick is excluded from each dropdown so the same option cannot be selected twice.
-* **Combined Analyze:** Three dropdowns (Sleep, Food, Caffeine) for one full day, unchanged in behavior.
-* **Combined Compare:** Two full day setups (**Day A** and **Day B**), each with three dropdowns.
-* **Compare Results UI:** Stacked Scenario A and B cards, each with its own Future Self message, score badge, and metric grid. A winner banner at the top shows the higher-scoring scenario with a VS score duel layout. Tie state uses a dedicated draw card.
-* **Winner Banner Polish:** Gradient background, trophy animation, sparkle accents on the winner badge, and entrance/shimmer animations via Tailwind keyframes.
-* **Action Button Icons:** **Calculate Prediction** uses a **ChartLineUp** icon (data-driven/scientific). **Compare Predictions** uses **Scales**. **Adjust Decisions** keeps a refresh icon for reset.
-* **UI Consistency Pass:** Single-mode option inputs use the same dropdown styling as Combined mode. Redundant category labels under options were removed since the category pills already show the active category.
-* **Cleanup:** Removed temporary runtime debug logging (`emitDebugLog`) from `page.tsx`.
+### D. Interaction Model & Compare Workflow (Updated May 31)
+* **Dual Intent Model:** The app still supports both **Analyze** and **Compare A/B**, but the UI now explicitly promotes **Compare A/B** as the primary workflow.
+* **Scope Toggle:** Users can still switch between **Single Decision** and **Combined Day**, with reset behavior preserved when major mode changes happen.
+* **Single Analyze:** Users choose one category and one option to inspect a single result in isolation.
+* **Single Compare:** Users compare two options inside the same category. The compare button remains disabled until both sides are selected, and duplicate picks are prevented.
+* **Combined Analyze:** Users build one full-day profile using Sleep, Food, and Caffeine and receive a single averaged outcome.
+* **Combined Compare:** Users build two full-day profiles (**Scenario A** and **Scenario B**) and compare them side by side.
+* **Compare Results UI:** Compare mode now emphasizes a stronger comparison outcome banner, followed by two scenario result cards and detailed statistics when expanded.
+* **Action Button Icons:** **Calculate Prediction** uses **ChartLineUp**, **Compare Predictions** uses **Scales**, and **Adjust Decisions** uses **ArrowClockwise**.
+* **Spacing Consistency Pass:** Updated vertical spacing, section grouping, card padding, and tile spacing so the screen feels more deliberate and less ad hoc.
+* **Cleanup:** Previous temporary debug artifacts and outdated UI assumptions were removed as the redesign was integrated.
+
+### E. Transparency & Trust Messaging (May 31)
+* **Methodology Section:** Added a dedicated transparency block directly under the main action button so users can understand the product before calculating results.
+* **Summary + Expandable Details:** The page now explains:
+  * What the app does
+  * How **Single Decision**, **Combined Day**, **Analyze**, and **Compare A/B** differ
+  * How the scoring works
+  * Dataset scope and limitations
+  * A transparency / non-medical-advice note
+  * A thank-you note to users
+* **Honest Framing:** The UI now explicitly explains that the app uses survey-response distributions and average scores, not probabilities and not a machine learning model.
+* **Persistent Footer Disclosure:** Added a visible short-form trust note in the footer: built from 70 survey responses and intended as short-term wellness guidance, not medical advice.
 
 ---
 
 ## 3. Current Validation Status
 
 ### A. Local Website Health Check
-* Application loads successfully on the local development server at `http://localhost:3000`.
-* If the dev server returns 404s for `/` or static chunks, clearing the `.next` cache and restarting fixes it (`rm -rf .next && npm run dev`). This was caused by a corrupted build cache and a stale process holding port 3000.
+* Application loads successfully in both development and production modes.
+* The development server may auto-shift ports when `3000` or `3001` are already in use, so local testing can occur on `3001` or `3002` instead of always staying on `3000`.
+* If the dev server returns 404s for `/` or static chunks, clearing the `.next` cache and restarting still remains a valid recovery step when the local build cache becomes stale.
 * Production build (`npm run build`) completes successfully.
 
 ### B. Runtime Interaction Testing
-* **Single Analyze:** Verified. Category pills, option dropdown, and Calculate Prediction render one result card correctly.
-* **Single Compare:** Verified via prediction logic and live UI. Example: Food **Skip a meal** vs **Eat a proper meal** yields proper meal as winner (6.9 vs 3.5).
-* **Combined Analyze:** Verified. One day setup returns a single averaged result.
-* **Combined Compare:** Verified. Example: bad day (less sleep, skip meal, high caffeine) vs good day yields Day B as winner (6.4 vs 3.9).
-* **Toggle resets:** Switching Single/Combined or Analyze/Compare clears calculated results.
-* **Stats accordion:** Works in both Analyze (one scenario) and Compare (A and B sections) modes.
-* **Adjust Decisions:** Reset flow clears results and returns to the input screen.
+* **Single Analyze:** Verified in browser. One category + one option returns a single result card correctly.
+* **Single Compare:** Verified in browser. Compare button starts disabled, enables only after both options are chosen, and returns a valid two-scenario comparison.
+* **Combined Analyze:** Verified in browser. One day setup returns a single averaged result.
+* **Combined Compare:** Verified in browser. The default compare-first flow produces a comparison banner, two scenario cards, and expandable statistics.
+* **Toggle resets:** Switching Single/Combined or Analyze/Compare clears calculated results as expected.
+* **Stats accordion:** Verified. Detailed statistics open and close correctly after calculation.
+* **Adjust Decisions:** Verified. Reset flow clears results and returns to the input screen.
+* **Browser-Based Validation:** A Playwright interaction pass was run against a clean production server build to confirm that the major user flows complete without browser-side page errors.
 
 ---
 
 ## 4. UX Review Notes
 
 ### A. Overall UX Polish
-* Current UI quality is roughly **8/10** for a medium-fidelity build, up from 7/10 after A/B Compare and the winner banner polish.
+* Current UI quality is roughly **8.5/10** for a more mature high-mid-fidelity prototype.
 * Strong points:
   * Clear mobile-first layout
-  * Friendly visual identity
-  * Consistent dropdown styling across Single and Combined modes
-  * Category capsules in Single mode feel distinct and scannable
-  * A/B Compare flow is intuitive with clear winner feedback
-  * Clean score and prediction presentation
+  * More distinctive scientific / compare-first visual identity
+  * Stronger hierarchy around decision-making rather than passive reading
+  * Cleaner panel system with more consistent spacing
+  * A/B Compare flow is now the clearest and strongest user journey
+  * Transparent methodology section improves trust and product clarity
+  * Score presentation and metric breakdowns are easier to scan
 
 ### B. UX Issues Worth Polishing
 * Some supporting text is still quite small, especially for a health-related experience where readability matters.
-* The product currently lacks a visible disclaimer or trust message such as "not medical advice."
-* Privacy and transparency messaging are still minimal, which matters more because the product talks about health behaviors and outcomes.
+* The transparency section is detailed, but it adds information density. The challenge now is balancing clarity with cognitive load for first-time users.
+* Privacy and compliance messaging are stronger in-page, but the product still does not yet have a dedicated privacy page, consent flow, or deeper policy structure.
+* The hero-to-content visual transition can still be refined further if a more seamless premium feel is desired.
 
 ### C. Accessibility Note
-* The current layout disables user zooming on mobile devices. This should be reconsidered because it can hurt accessibility and readability.
+* Mobile zoom is no longer forcibly disabled, which is an improvement over the previous build.
+* Additional accessibility work is still worthwhile, especially around text sizing, contrast review, and touch-target comfort on smaller screens.
 
 ---
 
@@ -115,13 +130,17 @@ Instead of relying on generic health advice, the app is powered by **real-world 
 ---
 
 ## 6. Next Steps & Polish
-Remaining work to move from medium-fidelity toward high-fidelity:
-1. **Figma Styling Integration:** Apply the exact color tokens (`#1F6F6B` deep teal, `#F7FAF9` background, `#DDE6E4` borders) and card styles from your Figma design system.
-2. **Accessibility Improvements:** Allow zooming, improve small text sizes, and strengthen readability for health-related content.
-3. **Trust & Compliance Messaging:** Add a short disclaimer, privacy note, and clearer transparency messaging about what the predictions are based on.
-4. **Interactive Micro-interactions:** Add smooth transitions, active states, and hover effects for buttons, pills, and dropdowns beyond what exists today.
-5. **Result Card Animations:** Introduce subtle entrance animations for the Future Self prediction cards on reveal (winner banner already has entrance animation).
+Remaining work to move from the current redesign toward a more production-ready build:
+1. **Cross-Browser QA:** Validate the full experience on Safari, Chrome mobile emulation, and additional real-device scenarios beyond the current validation pass.
+2. **Accessibility Improvements:** Continue improving small supporting text, touch-target comfort, and full readability for health-related content.
+3. **Policy Surface Expansion:** Add a dedicated privacy / transparency page or stronger standalone disclosure surfaces if the product evolves further.
+4. **Visual Refinement:** Continue polishing the hero-to-content transition, micro-interactions, and animation restraint so the interface feels even more cohesive.
+5. **Font Delivery Optimization:** Consider moving from raw Google Fonts links to `next/font` for cleaner font loading and build behavior.
 
 **Completed since last report (removed from next steps):**
 * Finish Interaction QA for Combined Day, stats accordion, and reset flow
 * A/B Compare Mode for Single and Combined decision paths
+* Compare-first visual redesign with sharper panel styling
+* In-page methodology and transparency section
+* Footer trust note / non-medical-advice messaging
+* Mobile zoom restriction removal
