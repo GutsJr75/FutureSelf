@@ -27,7 +27,32 @@ module.exports = {
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
-      }
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        winnerReveal: {
+          from: { opacity: "0", transform: "translateY(-10px) scale(0.97)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        trophyPop: {
+          "0%": { transform: "scale(0.6) rotate(-12deg)", opacity: "0" },
+          "60%": { transform: "scale(1.08) rotate(4deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.45s ease-out",
+        winnerReveal: "winnerReveal 0.55s ease-out",
+        trophyPop: "trophyPop 0.65s ease-out 0.15s both",
+        shimmer: "shimmer 2.5s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

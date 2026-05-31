@@ -159,6 +159,133 @@ export function calculateDecisionResult(categoryId: CategoryId, optionId: string
   };
 }
 
+export function getSentimentFromScore(score: number): ChoiceValue {
+  let nearest: ChoiceValue = "Normal";
+  let minDiff = 999;
+  (Object.keys(VALUE_SCORES) as ChoiceValue[]).forEach(val => {
+    const diff = Math.abs(VALUE_SCORES[val] - score);
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = val;
+    }
+  });
+  return nearest;
+}
+
+export function calculateSingleDecisionWithMessage(
+  categoryId: CategoryId,
+  optionId: string
+): DecisionResult & { message: string } {
+  const res = calculateDecisionResult(categoryId, optionId);
+  const message = getFutureSelfMessage(
+    [{ categoryId, optionId }],
+    res.overallScore,
+    res.energy.dominantSentiment,
+    res.mood.dominantSentiment,
+    res.focus.dominantSentiment
+  );
+  return { ...res, message };
+}
+
+export function calculateCombinedDayResult(
+  selections: Record<CategoryId, string>
+): DecisionResult & { message: string } {
+  const results = (Object.keys(selections) as CategoryId[]).map(catId => ({
+    catId,
+    res: calculateDecisionResult(catId, selections[catId]),
+  }));
+
+  const avgOverall = Number(
+    (results.reduce((acc, r) => acc + r.res.overallScore, 0) / results.length).toFixed(1)
+  );
+  const avgEnergy = Number(
+    (results.reduce((acc, r) => acc + r.res.energy.averageScore, 0) / results.length).toFixed(1)
+  );
+  const avgMood = Number(
+    (results.reduce((acc, r) => acc + r.res.mood.averageScore, 0) / results.length).toFixed(1)
+  );
+  const avgFocus = Number(
+    (results.reduce((acc, r) => acc + r.res.focus.averageScore, 0) / results.length).toFixed(1)
+  );
+
+  const energySentiment = getSentimentFromScore(avgEnergy);
+  const moodSentiment = getSentimentFromScore(avgMood);
+  const focusSentiment = getSentimentFromScore(avgFocus);
+
+  const choices = (Object.keys(selections) as CategoryId[]).map(catId => ({
+    categoryId: catId,
+    optionId: selections[catId],
+  }));
+
+  const message = getFutureSelfMessage(
+    choices,
+    avgOverall,
+    energySentiment,
+    moodSentiment,
+    focusSentiment
+  );
+
+  const mergeDistributions = (metric: "energy" | "mood" | "focus") => {
+    const merged: Record<ChoiceValue, number> = {
+      "Much Worse": 0,
+      Worse: 0,
+      Normal: 0,
+      Better: 0,
+      "Much Better": 0,
+    };
+    results.forEach(r => {
+      const dist = r.res[metric].distribution;
+      (Object.keys(merged) as ChoiceValue[]).forEach(k => {
+        merged[k] += dist[k];
+      });
+    });
+    (Object.keys(merged) as ChoiceValue[]).forEach(k => {
+      merged[k] = Number((merged[k] / results.length).toFixed(0));
+    });
+    return merged;
+  };
+
+  return {
+    overallScore: avgOverall,
+    energy: {
+      averageScore: avgEnergy,
+      distribution: mergeDistributions("energy"),
+      dominantSentiment: energySentiment,
+    },
+    mood: {
+      averageScore: avgMood,
+      distribution: mergeDistributions("mood"),
+      dominantSentiment: moodSentiment,
+    },
+    focus: {
+      averageScore: avgFocus,
+      distribution: mergeDistributions("focus"),
+      dominantSentiment: focusSentiment,
+    },
+    message,
+  };
+}
+
+export function compareOverallScores(
+  scoreA: number,
+  scoreB: number
+): { winner: "a" | "b" | "tie"; delta: number } {
+  const delta = Number(Math.abs(scoreA - scoreB).toFixed(1));
+  if (scoreA > scoreB) return { winner: "a", delta };
+  if (scoreB > scoreA) return { winner: "b", delta };
+  return { winner: "tie", delta: 0 };
+}
+
+export function getDefaultCompareOptions(categoryId: CategoryId): [string, string] {
+  const options = CATEGORIES[categoryId].options;
+  return [options[0].id, options[1]?.id ?? options[0].id];
+}
+
+export function getOptionLabel(categoryId: CategoryId, optionId: string): string {
+  const option = CATEGORIES[categoryId].options.find(o => o.id === optionId);
+  return option?.label ?? optionId;
+}
+
 // Generate future self message based on the overall score and metrics
 export function getFutureSelfMessage(
   choices: { categoryId: CategoryId; optionId: string }[],
