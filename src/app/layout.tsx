@@ -3,14 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FutureSelf - Daily Health Decisions",
-  description: "Compare your daily health choices and see predictions from your future self.",
+  description:
+    "Compare short-term habit choices using transparent survey-based scores for energy, mood, and focus.",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({

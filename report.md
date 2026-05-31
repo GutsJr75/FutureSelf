@@ -1,6 +1,6 @@
 # FutureSelf - Project Development Report
 
-**Date:** May 30, 2026  
+**Date:** May 31, 2026  
 **Project Name:** FutureSelf  
 **Target Platform:** Mobile-First Web Application  
 **Tech Stack:** Next.js (App Router), TypeScript, Tailwind CSS, Phosphor Icons, Python (for data ingestion)
@@ -35,6 +35,7 @@ Instead of relying on generic health advice, the app is powered by **real-world 
 * **Metric Calculations:** The engine calculates the average score for Energy, Mood, and Focus based on the 70 survey responses for any chosen habit.
 * **Combined Decisions Logic:** Created a custom aggregation algorithm that averages individual scores when a user builds a "Combined Day" (e.g., Sleep + Food + Caffeine).
 * **Future Self Messaging:** Programmed a dynamic prediction generator that writes a personalized, friendly "letter" from the user's Future Self based on the calculated scores.
+* **Refactored Helpers (May 31):** Extracted reusable logic into `calculateSingleDecisionWithMessage`, `calculateCombinedDayResult`, `compareOverallScores`, `getSentimentFromScore`, and `getOptionLabel` so Analyze and Compare flows share the same scoring path.
 
 ### C. UI/UX Design & Typography (Medium-Fidelity Skeleton)
 * **Mobile-First Layout:** Designed a sleek, single-column container optimized for mobile screens.
@@ -44,46 +45,55 @@ Instead of relying on generic health advice, the app is powered by **real-world 
 * **Premium Typography:**
   * **Outfit** (Headings): A friendly, geometric typeface with rounded curves that gives a modern, wellness-oriented feel.
   * **Plus Jakarta Sans** (Body Text): A highly readable, clean, and modern screen font.
-* **Phosphor Icons Integration:** Integrated the premium **Phosphor Icons** library using the consistent and friendly **Duotone** style. Removed all generic sparkle/star/screenshot icons to ensure a unique visual identity.
-* **Detailed Statistics Accordion:** Built a collapsible section showing custom horizontal bar charts that break down the exact percentage distribution of the 70 survey responses for Energy, Mood, and Focus.
+* **Phosphor Icons Integration:** Integrated the premium **Phosphor Icons** library using the consistent and friendly **Duotone** style across categories, metrics, and actions.
+* **Detailed Statistics Accordion:** Built a collapsible section showing custom horizontal bar charts that break down the exact percentage distribution of the 70 survey responses for Energy, Mood, and Focus. Accordion label toggles between "Show" and "Hide Detailed Statistics."
+
+### D. A/B Compare Mode (May 31)
+* **Dual Intent Toggle:** Added an **Analyze** | **Compare A/B** sub-toggle under both **Single Decision** and **Combined Day** modes.
+* **Single Analyze:** Category capsule pills (Sleep / Food / Caffeine) plus a dropdown for the chosen option.
+* **Single Compare:** Same category pills, then **Option A** and **Option B** dropdowns within the same category (not cross-category). No default selection; compare button stays disabled until both are chosen. The other side's pick is excluded from each dropdown so the same option cannot be selected twice.
+* **Combined Analyze:** Three dropdowns (Sleep, Food, Caffeine) for one full day, unchanged in behavior.
+* **Combined Compare:** Two full day setups (**Day A** and **Day B**), each with three dropdowns.
+* **Compare Results UI:** Stacked Scenario A and B cards, each with its own Future Self message, score badge, and metric grid. A winner banner at the top shows the higher-scoring scenario with a VS score duel layout. Tie state uses a dedicated draw card.
+* **Winner Banner Polish:** Gradient background, trophy animation, sparkle accents on the winner badge, and entrance/shimmer animations via Tailwind keyframes.
+* **Action Button Icons:** **Calculate Prediction** uses a **ChartLineUp** icon (data-driven/scientific). **Compare Predictions** uses **Scales**. **Adjust Decisions** keeps a refresh icon for reset.
+* **UI Consistency Pass:** Single-mode option inputs use the same dropdown styling as Combined mode. Redundant category labels under options were removed since the category pills already show the active category.
+* **Cleanup:** Removed temporary runtime debug logging (`emitDebugLog`) from `page.tsx`.
 
 ---
 
 ## 3. Current Validation Status
 
 ### A. Local Website Health Check
-* Confirmed that the application loads successfully on the local development server at `http://localhost:3000`.
-* Verified that the homepage responds correctly and that the current JavaScript and CSS assets are being served.
-* During testing, we found evidence of an earlier unstable dev-server state, but the current active run is loading the main page correctly.
+* Application loads successfully on the local development server at `http://localhost:3000`.
+* If the dev server returns 404s for `/` or static chunks, clearing the `.next` cache and restarting fixes it (`rm -rf .next && npm run dev`). This was caused by a corrupted build cache and a stale process holding port 3000.
+* Production build (`npm run build`) completes successfully.
 
 ### B. Runtime Interaction Testing
-* Added temporary runtime logging to inspect real user interactions instead of relying only on static code review.
-* **Single Decision flow:** Runtime-verified that the core interactions are functioning:
-  * Mode switching works.
-  * Category selection works.
-  * Option selection works.
-  * The **Calculate Prediction** button renders a result successfully.
-* Example verified runtime result:
-  * Category: **Caffeine**
-  * Option: **More than 200 mg (>1 drink)**
-  * Output observed: **Overall Score 4.9 / 10**, with separate Energy, Mood, and Focus values rendered correctly.
-* **Still pending full sign-off:** Combined Day dropdown flow, the **Show Detailed Statistics** accordion, and the **Adjust Decisions** reset flow were under live verification and should be treated as only partially verified until the full pass is completed.
+* **Single Analyze:** Verified. Category pills, option dropdown, and Calculate Prediction render one result card correctly.
+* **Single Compare:** Verified via prediction logic and live UI. Example: Food **Skip a meal** vs **Eat a proper meal** yields proper meal as winner (6.9 vs 3.5).
+* **Combined Analyze:** Verified. One day setup returns a single averaged result.
+* **Combined Compare:** Verified. Example: bad day (less sleep, skip meal, high caffeine) vs good day yields Day B as winner (6.4 vs 3.9).
+* **Toggle resets:** Switching Single/Combined or Analyze/Compare clears calculated results.
+* **Stats accordion:** Works in both Analyze (one scenario) and Compare (A and B sections) modes.
+* **Adjust Decisions:** Reset flow clears results and returns to the input screen.
 
 ---
 
 ## 4. UX Review Notes
 
 ### A. Overall UX Polish
-* Current UI quality is strong for a medium-fidelity build and feels roughly **7/10** in overall polish.
+* Current UI quality is roughly **8/10** for a medium-fidelity build, up from 7/10 after A/B Compare and the winner banner polish.
 * Strong points:
   * Clear mobile-first layout
   * Friendly visual identity
-  * Simple decision flow
+  * Consistent dropdown styling across Single and Combined modes
+  * Category capsules in Single mode feel distinct and scannable
+  * A/B Compare flow is intuitive with clear winner feedback
   * Clean score and prediction presentation
 
 ### B. UX Issues Worth Polishing
 * Some supporting text is still quite small, especially for a health-related experience where readability matters.
-* The statistics accordion could communicate its open/closed state more clearly with stronger wording.
 * The product currently lacks a visible disclaimer or trust message such as "not medical advice."
 * Privacy and transparency messaging are still minimal, which matters more because the product talks about health behaviors and outcomes.
 
@@ -105,10 +115,13 @@ Instead of relying on generic health advice, the app is powered by **real-world 
 ---
 
 ## 6. Next Steps & Polish
-Once you have reviewed the medium-fidelity skeleton, we can gradually transition it into a high-fidelity version:
-1. **Finish Interaction QA:** Complete live verification for Combined Day, the Detailed Statistics accordion, and the reset flow.
-2. **Figma Styling Integration:** Apply the exact color tokens (`#1F6F6B` deep teal, `#F7FAF9` background, `#DDE6E4` borders) and card styles from your Figma design system.
-3. **Accessibility Improvements:** Allow zooming, improve small text sizes, and strengthen readability for health-related content.
-4. **Trust & Compliance Messaging:** Add a short disclaimer, privacy note, and clearer transparency messaging about what the predictions are based on.
-5. **Interactive Micro-interactions:** Add smooth transitions, active states, and hover effects for buttons, pills, and dropdowns.
-6. **Animations:** Introduce subtle entrance animations for the Future Self prediction cards to make the reveal feel magical.
+Remaining work to move from medium-fidelity toward high-fidelity:
+1. **Figma Styling Integration:** Apply the exact color tokens (`#1F6F6B` deep teal, `#F7FAF9` background, `#DDE6E4` borders) and card styles from your Figma design system.
+2. **Accessibility Improvements:** Allow zooming, improve small text sizes, and strengthen readability for health-related content.
+3. **Trust & Compliance Messaging:** Add a short disclaimer, privacy note, and clearer transparency messaging about what the predictions are based on.
+4. **Interactive Micro-interactions:** Add smooth transitions, active states, and hover effects for buttons, pills, and dropdowns beyond what exists today.
+5. **Result Card Animations:** Introduce subtle entrance animations for the Future Self prediction cards on reveal (winner banner already has entrance animation).
+
+**Completed since last report (removed from next steps):**
+* Finish Interaction QA for Combined Day, stats accordion, and reset flow
+* A/B Compare Mode for Single and Combined decision paths
