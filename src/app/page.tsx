@@ -13,13 +13,12 @@ import {
 } from "./utils/prediction";
 import {
   Moon,
-  Egg,
+  BowlFood,
   Coffee,
   Lightning,
   Smiley,
   Target,
   ArrowClockwise,
-  SquaresFour,
   User,
   ChartBar,
   ChartLineUp,
@@ -27,7 +26,6 @@ import {
   CaretDown,
   CaretUp,
   Brain,
-  ShieldCheck,
   Scales,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -156,8 +154,8 @@ const TRANSPARENCY_SECTIONS: TransparencySection[] = [
 ];
 
 export default function Home() {
-  const [mode, setMode] = useState<"single" | "combined">("combined");
-  const [intent, setIntent] = useState<"analyze" | "compare">("compare");
+  const [mode, setMode] = useState<"single" | "combined" | null>(null);
+  const [intent, setIntent] = useState<"analyze" | "compare" | null>(null);
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>("sleep");
   const [selectedOption, setSelectedOption] = useState<string>("6_8");
@@ -175,15 +173,17 @@ export default function Home() {
   const [calculated, setCalculated] = useState<boolean>(false);
   const [openTransparencySection, setOpenTransparencySection] =
     useState<TransparencySectionId | null>(null);
+  const [showWorkflowInfo, setShowWorkflowInfo] = useState<boolean>(false);
+  const [showScopeInfo, setShowScopeInfo] = useState<boolean>(false);
 
   const panelClass =
     "rounded-md border border-border bg-surface p-5 shadow-panel";
   const insetPanelClass =
     "rounded-sm border border-border/80 bg-surfaceAlt p-4";
   const eyebrowClass =
-    "text-[11px] font-bold uppercase tracking-[0.24em] text-text-secondary";
+    "text-[11px] font-bold uppercase text-text-secondary";
   const fieldLabelClass =
-    "flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-text-secondary";
+    "flex items-center gap-1.5 text-[11px] font-bold uppercase text-text-secondary";
   const selectClassName =
     "w-full rounded-sm border border-border bg-surface px-3.5 py-3 text-sm font-semibold text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
@@ -225,11 +225,17 @@ export default function Home() {
     resetCalculated();
   };
 
+  const hasChosenWorkflow = intent !== null;
+  const hasChosenScope = mode !== null;
+  const hasChosenSetupType = hasChosenWorkflow && hasChosenScope;
+
   const canCalculate =
-    intent === "analyze" ||
-    (mode === "single" ? Boolean(optionA && optionB) : true);
+    hasChosenSetupType &&
+    (intent === "analyze" || (mode === "single" ? Boolean(optionA && optionB) : true));
 
   const getResults = (): AppResults | null => {
+    if (!hasChosenSetupType) return null;
+
     if (intent === "analyze") {
       if (mode === "single") {
         const res = calculateSingleDecisionWithMessage(selectedCategory, selectedOption);
@@ -295,7 +301,7 @@ export default function Home() {
       case "sleep":
         return <Moon size={size} className={className} weight="duotone" />;
       case "food":
-        return <Egg size={size} className={className} weight="duotone" />;
+        return <BowlFood size={size} className={className} weight="duotone" />;
       case "caffeine":
         return <Coffee size={size} className={className} weight="duotone" />;
     }
@@ -304,8 +310,9 @@ export default function Home() {
   const getCleanScenarioLabel = (label: string) =>
     label.replace(/^(Option|Scenario) [AB]: /, "");
 
-  const inputHeading =
-    intent === "compare"
+  const inputHeading = !hasChosenSetupType
+    ? "Choose how you want to use FutureSelf"
+    : intent === "compare"
       ? mode === "combined"
         ? "Compare two full day setups"
         : "Compare two options in one category"
@@ -313,8 +320,9 @@ export default function Home() {
         ? "Analyze one combined day"
         : "Analyze one decision in isolation";
 
-  const inputDescription =
-    intent === "compare"
+  const inputDescription = !hasChosenSetupType
+    ? "Pick a workflow and a scope above first. Once you choose both, the setup controls will appear here."
+    : intent === "compare"
       ? mode === "combined"
         ? "Set up two day profiles and compare their average short-term scores across energy, mood, and focus."
         : "Pick one category, then compare two choices inside that category to see which one scores better."
@@ -459,7 +467,7 @@ export default function Home() {
     <div className="grid grid-cols-3 gap-3">
       <div className="rounded-sm border border-border bg-surfaceAlt p-3 text-center">
         <Lightning size={16} className="mx-auto mb-1 text-primary" weight="duotone" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-secondary">
+        <p className="text-[10px] font-bold uppercase text-text-secondary">
           Energy
         </p>
         <p className="mt-1 text-sm font-extrabold text-text-primary">
@@ -468,7 +476,7 @@ export default function Home() {
       </div>
       <div className="rounded-sm border border-border bg-surfaceAlt p-3 text-center">
         <Smiley size={16} className="mx-auto mb-1 text-primary" weight="duotone" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-secondary">
+        <p className="text-[10px] font-bold uppercase text-text-secondary">
           Mood
         </p>
         <p className="mt-1 text-sm font-extrabold text-text-primary">
@@ -477,7 +485,7 @@ export default function Home() {
       </div>
       <div className="rounded-sm border border-border bg-surfaceAlt p-3 text-center">
         <Target size={16} className="mx-auto mb-1 text-primary" weight="duotone" />
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-secondary">
+        <p className="text-[10px] font-bold uppercase text-text-secondary">
           Focus
         </p>
         <p className="mt-1 text-sm font-extrabold text-text-primary">
@@ -505,11 +513,11 @@ export default function Home() {
           </div>
         </div>
         <div className={`min-w-[102px] rounded-sm border px-3 py-2 text-right ${getScoreColor(scenario.overallScore)}`}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em]">Overall</p>
+          <p className="text-[10px] font-bold uppercase">Overall</p>
           <p className="mt-1 text-2xl font-extrabold font-display leading-none">
             {scenario.overallScore}
           </p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em]">
+          <p className="mt-1 text-[10px] font-semibold uppercase">
             out of 10
           </p>
         </div>
@@ -538,7 +546,7 @@ export default function Home() {
         return (
           <div key={`${scenario.label}-${metric}`} className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-text-secondary">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-text-secondary">
                 {icon}
                 {metric}
               </span>
@@ -601,7 +609,7 @@ export default function Home() {
               highlightWinner === "a" ? winnerHighlight : loserStyle
             }`}
           >
-            <p className={`truncate text-[10px] font-bold uppercase tracking-[0.22em] ${labelClass}`}>
+            <p className={`truncate text-[10px] font-bold uppercase ${labelClass}`}>
               {labelA}
             </p>
             <p
@@ -611,13 +619,13 @@ export default function Home() {
             >
               {scoreA}
             </p>
-            <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${suffixClass}`}>
+            <p className={`mt-1 text-[10px] font-semibold uppercase ${suffixClass}`}>
               out of 10
             </p>
           </div>
 
           <div className="flex items-center justify-center px-1">
-            <span className={`text-[10px] font-extrabold uppercase tracking-[0.32em] ${vsClass}`}>
+            <span className={`text-[10px] font-extrabold uppercase ${vsClass}`}>
               VS
             </span>
           </div>
@@ -627,7 +635,7 @@ export default function Home() {
               highlightWinner === "b" ? winnerHighlight : loserStyle
             }`}
           >
-            <p className={`truncate text-[10px] font-bold uppercase tracking-[0.22em] ${labelClass}`}>
+            <p className={`truncate text-[10px] font-bold uppercase ${labelClass}`}>
               {labelB}
             </p>
             <p
@@ -637,7 +645,7 @@ export default function Home() {
             >
               {scoreB}
             </p>
-            <p className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${suffixClass}`}>
+            <p className={`mt-1 text-[10px] font-semibold uppercase ${suffixClass}`}>
               out of 10
             </p>
           </div>
@@ -684,7 +692,7 @@ export default function Home() {
         <div className="relative p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/60">
+              <p className="text-[11px] font-bold uppercase text-white/60">
                 Comparison outcome
               </p>
               <h3 className="mt-1 text-lg font-extrabold font-display leading-tight">
@@ -702,19 +710,19 @@ export default function Home() {
 
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="rounded-sm border border-white/10 bg-white/[0.05] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+              <p className="text-[10px] font-bold uppercase text-white/55">
                 Leading score
               </p>
               <p className="mt-1 text-base font-bold text-white">{winner.overallScore}/10</p>
             </div>
             <div className="rounded-sm border border-white/10 bg-white/[0.05] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+              <p className="text-[10px] font-bold uppercase text-white/55">
                 Delta
               </p>
               <p className="mt-1 text-base font-bold text-amber-200">+{comparison.delta}</p>
             </div>
             <div className="rounded-sm border border-white/10 bg-white/[0.05] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+              <p className="text-[10px] font-bold uppercase text-white/55">
                 Basis
               </p>
               <p className="mt-1 text-base font-bold text-white">Avg. scores</p>
@@ -773,6 +781,16 @@ export default function Home() {
     );
   };
 
+  const renderInlineDetails = (isOpen: boolean, content: string) => (
+    <div
+      className={`overflow-hidden transition-all duration-300 ease-out ${
+        isOpen ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
+      }`}
+    >
+      <p className="pt-3 text-sm leading-relaxed text-text-secondary">{content}</p>
+    </div>
+  );
+
   return (
     <div className="flex flex-1 flex-col pb-12">
       <section className="relative overflow-hidden border-b border-border bg-primary-dark text-white">
@@ -787,31 +805,25 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(46,125,91,0.25),transparent_40%)]" />
 
         <div className="relative space-y-5 px-5 pb-7 pt-8">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-sm border border-white/15 bg-white/10">
                 <Brain size={24} weight="fill" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/60">
-                  FutureSelf
+                <p className="text-sm font-extrabold text-white">
+                  <span className="text-white/78">Future</span>
+                  <span className="text-primary-light">Self</span>
                 </p>
                 <p className="mt-1 text-xs text-white/72">
                   Survey-informed habit comparison
                 </p>
               </div>
             </div>
-
-            <div className="rounded-sm border border-white/15 bg-white/10 px-3 py-2 text-right">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/60">
-                Recommended
-              </p>
-              <p className="mt-1 text-sm font-bold text-white">Compare A/B</p>
-            </div>
           </div>
 
           <div className="space-y-3">
-            <h1 className="text-3xl font-extrabold font-display leading-tight tracking-tight">
+            <h1 className="text-3xl font-extrabold font-display leading-tight">
               Compare two possible tomorrows before you commit to one.
             </h1>
             <p className="max-w-sm text-sm leading-relaxed text-white/78">
@@ -820,26 +832,6 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-sm border border-white/10 bg-white/[0.06] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/55">
-                Dataset
-              </p>
-              <p className="mt-1 text-base font-bold text-white">70 responses</p>
-            </div>
-            <div className="rounded-sm border border-white/10 bg-white/[0.06] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/55">
-                Window
-              </p>
-              <p className="mt-1 text-base font-bold text-white">2 to 4 hrs</p>
-            </div>
-            <div className="rounded-sm border border-white/10 bg-white/[0.06] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/55">
-                Outputs
-              </p>
-              <p className="mt-1 text-base font-bold text-white">3 metrics</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -847,21 +839,20 @@ export default function Home() {
         <div className={`${panelClass} space-y-5`}>
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <p className={eyebrowClass}>Primary workflow</p>
-              <p className="text-xs font-semibold text-primary">Compare first</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className={eyebrowClass}>Primary workflow</p>
+              </div>
               <button
                 type="button"
-                onClick={() => handleIntentChange("compare")}
-                className={`rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
-                  intent === "compare"
-                    ? "border-primary bg-primary text-white shadow-panel"
-                    : "border-border bg-surfaceAlt text-text-secondary hover:border-primary/40 hover:text-text-primary"
-                }`}
+                onClick={() => setShowWorkflowInfo(current => !current)}
+                aria-expanded={showWorkflowInfo}
+                aria-label={showWorkflowInfo ? "Hide workflow details" : "Show workflow details"}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-surfaceAlt text-text-secondary transition-colors hover:border-primary/30 hover:text-primary"
               >
-                Compare A/B
+                {showWorkflowInfo ? <CaretUp size={18} weight="bold" /> : <CaretDown size={18} weight="bold" />}
               </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleIntentChange("analyze")}
@@ -873,45 +864,65 @@ export default function Home() {
               >
                 Analyze
               </button>
-            </div>
-            <p className="text-sm leading-relaxed text-text-secondary">
-              Compare A/B is the recommended path when you want to choose between two futures.
-              Analyze is better when you want a single score readout without a side-by-side test.
-            </p>
-          </div>
-
-          <div className="space-y-3 border-t border-border pt-5">
-            <p className={eyebrowClass}>Scope</p>
-            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleModeChange("combined")}
-                className={`flex items-center justify-center gap-1.5 rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
-                  mode === "combined"
+                onClick={() => handleIntentChange("compare")}
+                className={`rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
+                  intent === "compare"
                     ? "border-primary bg-primary text-white shadow-panel"
                     : "border-border bg-surfaceAlt text-text-secondary hover:border-primary/40 hover:text-text-primary"
                 }`}
               >
-                <ShieldCheck size={16} weight="duotone" />
-                Combined Day
+                Compare A/B
               </button>
+            </div>
+            {renderInlineDetails(
+              showWorkflowInfo,
+              "Use Compare A/B when you are deciding between two realistic options. Use Analyze when you just want a quick read on one setup without putting it side by side against another."
+            )}
+          </div>
+
+          <div className="space-y-3 border-t border-border pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <p className={eyebrowClass}>Scope</p>
+              <button
+                type="button"
+                onClick={() => setShowScopeInfo(current => !current)}
+                aria-expanded={showScopeInfo}
+                aria-label={showScopeInfo ? "Hide scope details" : "Show scope details"}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-surfaceAlt text-text-secondary transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                {showScopeInfo ? <CaretUp size={18} weight="bold" /> : <CaretDown size={18} weight="bold" />}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleModeChange("single")}
-                className={`flex items-center justify-center gap-1.5 rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
+                className={`flex items-center justify-center rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
                   mode === "single"
                     ? "border-primary bg-primary text-white shadow-panel"
                     : "border-border bg-surfaceAlt text-text-secondary hover:border-primary/40 hover:text-text-primary"
                 }`}
               >
-                <SquaresFour size={16} weight="bold" />
-                Single Decision
+                One Habit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange("combined")}
+                className={`flex items-center justify-center rounded-sm border px-4 py-3 text-sm font-semibold transition-all ${
+                  mode === "combined"
+                    ? "border-primary bg-primary text-white shadow-panel"
+                    : "border-border bg-surfaceAlt text-text-secondary hover:border-primary/40 hover:text-text-primary"
+                }`}
+              >
+                All 3 Habits
               </button>
             </div>
-            <p className="text-sm leading-relaxed text-text-secondary">
-              Combined Day compares full setups across sleep, food, and caffeine. Single Decision
-              isolates one category so you can study one variable more closely.
-            </p>
+            {renderInlineDetails(
+              showScopeInfo,
+              "All 3 Habits looks at your day as a mix of sleep, food, and caffeine. One Habit lets you zoom in on just one of those so you can see its effect more clearly."
+            )}
           </div>
         </div>
 
@@ -920,13 +931,25 @@ export default function Home() {
             <div className={`${panelClass} space-y-5`}>
               <div className="space-y-2">
                 <p className={eyebrowClass}>
-                  {intent === "compare" ? "Comparison setup" : "Analysis setup"}
+                  {!hasChosenSetupType
+                    ? "Setup"
+                    : intent === "compare"
+                      ? "Comparison setup"
+                      : "Analysis setup"}
                 </p>
                 <h2 className="text-lg font-bold text-text-primary">{inputHeading}</h2>
                 <p className="text-sm leading-relaxed text-text-secondary">{inputDescription}</p>
               </div>
 
-              {mode === "single" ? (
+              {!hasChosenSetupType ? (
+                <div className={insetPanelClass}>
+                  <p className={eyebrowClass}>Waiting for your choices</p>
+                  <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                    Start by choosing a workflow and whether you want to look at one habit or all
+                    three together.
+                  </p>
+                </div>
+              ) : mode === "single" ? (
                 renderSingleDecisionInputs()
               ) : intent === "analyze" ? (
                 <div className={insetPanelClass}>
@@ -983,22 +1006,24 @@ export default function Home() {
               )}
             </div>
 
-            <button
-              onClick={handleCalculate}
-              disabled={!canCalculate}
-              className={`flex w-full items-center justify-center gap-2 rounded-md border px-4 py-4 text-sm font-bold transition-all ${
-                canCalculate
-                  ? "border-primary bg-primary text-white shadow-panel hover:bg-primary/95"
-                  : "cursor-not-allowed border-border bg-border/70 text-text-secondary shadow-none"
-              }`}
-            >
-              {intent === "compare" ? (
-                <Scales size={18} weight="duotone" />
-              ) : (
-                <ChartLineUp size={18} weight="bold" />
-              )}
-              {intent === "compare" ? "Compare Predictions" : "Calculate Prediction"}
-            </button>
+            {hasChosenSetupType && (
+              <button
+                onClick={handleCalculate}
+                disabled={!canCalculate}
+                className={`flex w-full items-center justify-center gap-2 rounded-md border px-4 py-4 text-sm font-bold transition-all ${
+                  canCalculate
+                    ? "border-primary bg-primary text-white shadow-panel hover:bg-primary/95"
+                    : "cursor-not-allowed border-border bg-border/70 text-text-secondary shadow-none"
+                }`}
+              >
+                {intent === "compare" ? (
+                  <Scales size={18} weight="duotone" />
+                ) : (
+                  <ChartLineUp size={18} weight="bold" />
+                )}
+                {intent === "compare" ? "Compare Predictions" : "Calculate Prediction"}
+              </button>
+            )}
 
             <div className={`${panelClass} space-y-5`}>
               <div className="space-y-3">
@@ -1009,11 +1034,13 @@ export default function Home() {
                       What FutureSelf is actually showing you
                     </h3>
                   </div>
-                  <div className="rounded-sm border border-border bg-surfaceAlt px-3 py-2 text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
+                  <div className="min-w-[132px] shrink-0 rounded-sm border border-border bg-surfaceAlt px-3 py-2 text-right">
+                    <p className="text-[10px] font-bold uppercase text-text-secondary">
                       Model type
                     </p>
-                    <p className="mt-1 text-sm font-bold text-text-primary">Rule-based</p>
+                    <p className="mt-1 whitespace-nowrap text-sm font-bold text-text-primary">
+                      Rule-based
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed text-text-secondary">
@@ -1026,19 +1053,19 @@ export default function Home() {
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-sm border border-border bg-surfaceAlt p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary">
                     Data
                   </p>
                   <p className="mt-1 text-sm font-bold text-text-primary">70 responses</p>
                 </div>
                 <div className="rounded-sm border border-border bg-surfaceAlt p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary">
                     Horizon
                   </p>
                   <p className="mt-1 text-sm font-bold text-text-primary">Short-term</p>
                 </div>
                 <div className="rounded-sm border border-border bg-surfaceAlt p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary">
                     Output
                   </p>
                   <p className="mt-1 text-sm font-bold text-text-primary">Avg. scores</p>
